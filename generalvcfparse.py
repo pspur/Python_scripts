@@ -6,6 +6,7 @@ import itertools
 
 variants = {} # key = chrom:pos, value = allele
 sampleid = []
+scores = open('/gpfs/user/paulspur/scores.txt','w')
 
 # Create list of all 50 sample ID #'s
 with open('/gpfs/user/paulspur/vcfs.txt','r') as vcf_paths:
@@ -14,17 +15,14 @@ with open('/gpfs/user/paulspur/vcfs.txt','r') as vcf_paths:
     sampleid.append(m.group(1))
 sampleid.sort()
 
-scores = open('/gpfs/user/paulspur/scores.txt','w')
-#print('sID  ', end = '', file = scores)
-#print('\n', file = scores)
- 
+# Iterate through the sample files. For each iteration, create dict of
+# current file then compare to each remaining file. Avoid repeating
+# comparisons and comparing one to itself.
 for ref in sampleid:
   fin = gzip.open('/projects/big/BIG-Pilot-Projects/021115-Statin-Induced-Myopathy/'
                 'Project_NOW_01348_WGS_2015-02-03/Sample_{0}/analysis/'
                 '{0}.recalibrated.haplotypeCalls.vcf.gz'.format(ref),'r')
   for i,line in enumerate(fin):
-#    if i % 500000 == 0:
-#      print('building dict...')
     m = re.search(r'^(\d{1,2})\s+(\d+)\s+\S+\s+[ATCG]+\s+([,ATCG]+)',line)
     if m:
       vkey = m.group(1) + ':' + m.group(2)
@@ -32,13 +30,11 @@ for ref in sampleid:
   fin.close()
   
   for sid in sampleid:
-    if sid < ref:
+    if sid < ref: # abc = already been compared
       print('{0} <> {1} = abc'.format(ref,sid),file = scores)
-    if sid == ref:
-#      print('{0} <> {1} -- similarity score: 1.000'.format(ref,sid))
+    if sid == ref: # skip compare, similarity to self is 1.0
       print('{0} <> {1} = 1.00'.format(ref,sid),file = scores) 
     if sid > ref:
-#      print('Comparing {0} to {1}'.format(ref,sid))
       count = 0
       matches = 0
       fin = gzip.open('/projects/big/BIG-Pilot-Projects/021115-Statin-Induced-Myopathy/'
@@ -48,16 +44,11 @@ for ref in sampleid:
         m = re.search(r'(^\d{1,2})\s+(\d+)\s+\S+\s+[ATCG]+\s+([,ATCG]+)',line)
         if m:
           count += 1
- #         if count % 1000000 == 0:
- #           print('processing hits {0}++..'.format(count))
           vkey = m.group(1) + ':' + m.group(2)
-          if vkey in variants:
-            if variants[vkey] == m.group(3):
-              matches += 1
+          if vkey in variants and variants[vkey] == m.group(3)::
+            matches += 1
       fin.close()
-      uniquehits = len(variants) + (count - matches)
+      uniquehits = len(variants) + count - matches
       sscore = matches / uniquehits
-#      print('matches: {0}, unique hits: {1}'.format(matches,uniquehits))
-#      print('{0} <> {1} -- similarity score: {2:.3f}'.format(ref,sid,sscore))
       print('{0} <> {1} = {2:.3f} '.format(ref,sid,sscore),file = scores)
 scores.close()
