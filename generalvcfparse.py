@@ -6,10 +6,10 @@ import itertools
 
 variants = {} # key = chrom:pos, value = allele
 sampleid = []
-scores = open('/gpfs/user/paulspur/scores.txt','w')
+scores = open('./scores.txt','w')
 
 # Create list of all 50 sample ID #'s
-with open('/gpfs/user/paulspur/vcfs.txt','r') as vcf_paths:
+with open('./vcfs.txt','r') as vcf_paths:
   for line in vcf_paths:
     m = re.search(r'Sample_(\d+)',line)
     sampleid.append(m.group(1))
