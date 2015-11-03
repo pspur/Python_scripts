@@ -95,10 +95,7 @@ def print_severity_matrix(sam,sev_matrix,outfile):
     for gene,value in sev_matrix.iteritems():
       fout.write('{}\t'.format(gene))
       for k,v in sorted(value.iteritems()):
-        if v == 0:
-          fout.write('0\t')
-        else:
-          fout.write('{}\t'.format(v))
+        fout.write('{}\t'.format(v))
       fout.write('\n')
 
 def print_gt_matrix(sam,gt_matrix,outfile):
@@ -110,10 +107,7 @@ def print_gt_matrix(sam,gt_matrix,outfile):
     for gene,value in gt_matrix.iteritems():
       fout.write('{}\t'.format(gene))
       for k,v in sorted(value.iteritems()):
-        if v == 99:
-          fout.write('0\t')
-        else:
-          fout.write('{}\t'.format(v))
+        fout.write('{}\t'.format(v))
       fout.write('\n')
 
 if __name__ == '__main__':
