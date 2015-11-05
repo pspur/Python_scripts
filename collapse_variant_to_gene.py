@@ -5,7 +5,6 @@
 
 from __future__ import print_function
 import sys
-import re
 
 # Taken from http://annovar.openbioinformatics.org/en/latest/user-guide/gene/
 # with 'synonymous' replaced by '.' to account for presence of 'splicing' Func
@@ -37,11 +36,11 @@ def getSampleIDs(f):
 # General flow: for each line in file: split by tabs, process only lines with
 # desired attributes. For each one of those, convert ExonicFunc.refGene (severity)
 # field to numerical value and for each gene in the Gene.refGene field add the
-# sample:severity to the gene's severity dict, or update it if present and current # severity > stored severity.
+# sample:severity to the gene's severity dict, or update it if present and 
+# current severity > stored severity.
 # At the same time, perform the same process on each line for the genotype dict,
 # updating it only when currenty severity >= stored severity and gt count > stored
-# count. Any samples not present for a given gene receive placeholder severity and
-# gt count of 0 to help with properly formatting output.
+# count.
 def collapse_to_matrix(f,num):
   nt = ['A','C','T','G']
   sevdict = {}
@@ -74,7 +73,7 @@ def collapse_to_matrix(f,num):
               gtsum = 0
             else:
               gtsum = int(gt[0]) + int(gt[1])
-            if (('0/0' in sam) or ('./.' in sam)):
+            if gtsum == 0:
               sevdict[gene].setdefault(samples[i],0)
               gtdict[gene].setdefault(samples[i],0)
             elif (samples[i] in sevdict[gene]) and (sev >= sevdict[gene][samples[i]]):
