@@ -48,41 +48,42 @@ def collapse_to_matrix(f,num):
   with open(f,'r') as fin:
     for line in fin:
       line = line.strip()
-      cols = line.split('\t')
-      Func_refGene = cols[5]
-      Gene_refGene = cols[6]
-      ExonicFunc_refGene = cols[8]
-      Ref = cols[3]
-      Alt = cols[4]
-      if ((Func_refGene.startswith('exonic')) or (Func_refGene.startswith('splicing'))) and \
-          (not ExonicFunc_refGene.startswith('synonymous')) and \
-          (Ref in nt) and (Alt in nt): # only SNPs
-        sev = severity[cols[8]]
-        if (',' in Gene_refGene): # if multiple genes in field
-          genes = Gene_refGene.split(',')
-        else:
-          genes = []
-          genes.append(Gene_refGene)
-        for gene in genes:
-          sevdict.setdefault(gene,{})
-          gtdict.setdefault(gene,{})
-          for i,sam in enumerate(cols[-num:]): # the genotype fields  
-            gt = sam.split(':')[0].split('/')
-            gtsum = 0
-            if '.' in gt:
+      if not line.startswith('#'):
+        cols = line.split('\t')
+        Func_refGene = cols[5]
+        Gene_refGene = cols[6]
+        ExonicFunc_refGene = cols[8]
+        Ref = cols[3]
+        Alt = cols[4]
+        if ((Func_refGene.startswith('exonic')) or (Func_refGene.startswith('splicing'))) and \
+            (not ExonicFunc_refGene.startswith('synonymous')) and \
+            (Ref in nt) and (Alt in nt): # only SNPs
+          sev = severity[cols[8]]
+          if (',' in Gene_refGene): # if multiple genes in field
+            genes = Gene_refGene.split(',')
+          else:
+            genes = []
+            genes.append(Gene_refGene)
+          for gene in genes:
+            sevdict.setdefault(gene,{})
+            gtdict.setdefault(gene,{})
+            for i,sam in enumerate(cols[-num:]): # the genotype fields  
+              gt = sam.split(':')[0].split('/')
               gtsum = 0
-            else:
-              gtsum = int(gt[0]) + int(gt[1])
-            if gtsum == 0:
-              sevdict[gene].setdefault(samples[i],0)
-              gtdict[gene].setdefault(samples[i],0)
-            elif (samples[i] in sevdict[gene]) and (sev >= sevdict[gene][samples[i]]):
-              sevdict[gene][samples[i]] = sev
-              if (gtsum > gtdict[gene][samples[i]]): 
-                gtdict[gene][samples[i]] = gtsum
-            else:
-              sevdict[gene].setdefault(samples[i],sev)
-       	      gtdict[gene].setdefault(samples[i],gtsum)
+              if '.' in gt:
+                gtsum = 0
+              else:
+                gtsum = int(gt[0]) + int(gt[1])
+              if gtsum == 0:
+                sevdict[gene].setdefault(samples[i],0)
+                gtdict[gene].setdefault(samples[i],0)
+              elif (samples[i] in sevdict[gene]) and (sev >= sevdict[gene][samples[i]]):
+                sevdict[gene][samples[i]] = sev
+                if (gtsum > gtdict[gene][samples[i]]): 
+                  gtdict[gene][samples[i]] = gtsum
+              else:
+                sevdict[gene].setdefault(samples[i],sev)
+       	    gtdict[gene].setdefault(samples[i],gtsum)
   return(sevdict,gtdict)
 
 def print_severity_matrix(sam,sev_matrix,outfile):
