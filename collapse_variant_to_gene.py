@@ -1,6 +1,7 @@
 # This script takes in 2 command-line arguments, the names of the input and 
 # output files. 
-# Input file is expected to contain fields with format:
+# Input file is expected to contain header starting with #CHROM and containing
+# all sample IDs (tab-delimited) and have fields with format:
 # Chr Start End Ref Alt Func.refGene Gene.refGene GeneDetail.refGene ExonicFunc.refGene, etc
 # Output is 2 separate files, one with .gt appended and one with .sev appended 
 # to provided output name.
