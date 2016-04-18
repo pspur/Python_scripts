@@ -84,6 +84,11 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print('Usage: python sample_concordance_vcf.py [vcf to parse] [type of correlation] > [fileout]\n'
               'correlation type: c for concordance, p for pearsons')
+        sys.exit(1)
+    if sys.argv[2].lower() not in ('c','p'):
+        print('Usage: python sample_concordance_vcf.py [vcf to parse] [type of correlation] > [fileout]\n'
+              'correlation type: c for concordance, p for pearsons')
+        sys.exit(1)
     filein = sys.argv[1]
     samples = getSampleInfo(filein)
     var_matrix, total_vars = buildSampleVarMatrix(filein, samples)
@@ -91,7 +96,4 @@ if __name__ == '__main__':
         ccords = calcConcordance(var_matrix, total_vars)
     elif (sys.argv[2].lower() == 'p'):
         ccords = numpy.corrcoef(var_matrix)
-    else:
-        print('Usage: python sample_concordance_vcf.py [vcf to parse] [type of correlation] > [fileout]\n'
-              'correlation type: c for concordance, p for pearsons')  
     writeMatrix(ccords, samples)
