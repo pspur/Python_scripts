@@ -83,11 +83,11 @@ def writeMatrix(m,sams):
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print('Usage: python sample_concordance_vcf.py [vcf to parse] [type of correlation] > [fileout]\n'
-              'correlation type: c for concordance, p for pearsons')
+              'correlation type: c for concordance, p for pearsons',file=sys.stderr)
         sys.exit(1)
     if sys.argv[2].lower() not in ('c','p'):
         print('Usage: python sample_concordance_vcf.py [vcf to parse] [type of correlation] > [fileout]\n'
-              'correlation type: c for concordance, p for pearsons')
+              'correlation type: c for concordance, p for pearsons',file=sys.stderr)
         sys.exit(1)
     filein = sys.argv[1]
     samples = getSampleInfo(filein)
