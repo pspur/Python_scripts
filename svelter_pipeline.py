@@ -4,11 +4,11 @@
 ### TODO: 1. Change svelter location in subprocess calls to global one
 ###          once it's properly set up.
 
-
 import os
 import sys
 import time
 import subprocess
+import argparse
 
 def createNullModel(bam,sam,workdir,logdir,scriptdir):
     with open(r'{0}/sv_nullmodel_{1}.sh'.format(scriptdir,sam),'w') as nm:
@@ -44,16 +44,26 @@ def createBPSearch(bam,sam,workdir,logdir,scriptdir,chroms,job):
         with open(r'{0}/sv_bpsearch_{1}chr{2}.sh'.format(scriptdir,sam,chrom),'w') as bps:
                 bps.write('#!/bin/sh\n\n')
                 bps.write('#SBATCH --partition=general-compute\n')
-                bps.write('#SBATCH --time=6:00:00\n')
-                bps.write('#SBATCH --nodes=1\n')
-                bps.write('#SBATCH --mem=18000\n')
+                if type(chrom) is int and chrom <= 2:
+                    bps.write('#SBATCH --time=10:00:00\n')
+                    bps.write('#SBATCH --nodes=1\n')
+                    bps.write('#SBATCH --mem=48000\n')
+                elif type(chrom) is int and chrom <= 10:
+                    bps.write('#SBATCH --time=10:00:00\n')
+                    bps.write('#SBATCH --nodes=1\n')
+                    bps.write('#SBATCH --mem=24000\n')
+                else:
+                    bps.write('#SBATCH --time=5:00:00\n')
+                    bps.write('#SBATCH --nodes=1\n')
+                    bps.write('#SBATCH --mem=16000\n')
                 bps.write('#SBATCH --ntasks-per-node=1\n')
                 bps.write('#SBATCH --job-name=sv_bpsearch_{0}chr{1}\n'.format(sam,chrom))
                 bps.write('#SBATCH --output={0}/bpsearch/sv_bpsearch_{1}chr{2}.log'
                           '\n'.format(logdir,sam,chrom))
                 bps.write('#SBATCH --qos=supporters\n')
                 bps.write('#SBATCH --account=big\n')
-                bps.write('#SBATCH --dependency=afterok:{0}\n'.format(job))
+                if job:
+                    bps.write('#SBATCH --dependency=afterok:{0}\n'.format(job))
                 bps.write('echo "SLURM_JOBID="$SLURM_JOBID\n')
                 bps.write('echo "SLURM_JOB_NODELIST"=$SLURM_JOB_NODELIST\n')
                 bps.write('echo "SLURM_NNODES"=$SLURM_NNODES\n')
@@ -78,11 +88,12 @@ def createBPIntegrate(bam,sam,workdir,logdir,scriptdir,jobs):
         bpi.write('#SBATCH --mem=8000\n')
         bpi.write('#SBATCH --ntasks-per-node=1\n')
         bpi.write('#SBATCH --job-name=sv_bpintegrate_{0}\n'.format(sam))
-        bpi.write('#SBATCH --output={0}/bpintegrate/sv_bpintegrate_{0}.log'
+        bpi.write('#SBATCH --output={0}/bpintegrate/sv_bpintegrate_{1}.log'
                   '\n'.format(logdir,sam))
         bpi.write('#SBATCH --qos=supporters\n')
         bpi.write('#SBATCH --account=big\n')
-        bpi.write('#SBATCH --dependency=afterok:{0}\n'.format(':'.join(jobs)))
+        if jobs:
+            bpi.write('#SBATCH --dependency=afterok:{0}\n'.format(':'.join(jobs)))
         bpi.write('echo "SLURM_JOBID="$SLURM_JOBID\n')
         bpi.write('echo "SLURM_JOB_NODELIST"=$SLURM_JOB_NODELIST\n')
         bpi.write('echo "SLURM_NNODES"=$SLURM_NNODES\n')
@@ -106,14 +117,15 @@ def createSVPredict(bam,sam,workdir,logdir,scriptdir,job):
         svp.write('#SBATCH --partition=general-compute\n')
         svp.write('#SBATCH --time=6:00:00\n')
         svp.write('#SBATCH --nodes=1\n')
-        svp.write('#SBATCH --mem=18000\n')
+        svp.write('#SBATCH --mem=16000\n')
         svp.write('#SBATCH --ntasks-per-node=1\n')
         svp.write('#SBATCH --job-name=sv_svpredict_{0}\n'.format(sam))
-        svp.write('#SBATCH --output={0}/svpredict/sv_svpredict_{0}.log'
+        svp.write('#SBATCH --output={0}/svpredict/sv_svpredict_{1}.log'
                   '\n'.format(logdir,sam))
         svp.write('#SBATCH --qos=supporters\n')
         svp.write('#SBATCH --account=big\n')
-        svp.write('#SBATCH --dependency=afterok:{0}\n'.format(job))
+        if job:
+            svp.write('#SBATCH --dependency=afterok:{0}\n'.format(job))
         svp.write('echo "SLURM_JOBID="$SLURM_JOBID\n')
         svp.write('echo "SLURM_JOB_NODELIST"=$SLURM_JOB_NODELIST\n')
         svp.write('echo "SLURM_NNODES"=$SLURM_NNODES\n')
@@ -141,11 +153,12 @@ def createSVIntegrate(bam,sam,workdir,logdir,scriptdir,job):
         svp.write('#SBATCH --mem=8000\n')
         svp.write('#SBATCH --ntasks-per-node=1\n')
         svp.write('#SBATCH --job-name=sv_svintegrate_{0}\n'.format(sam))
-        svp.write('#SBATCH --output={0}/svintegrate/sv_svintegrate_{0}.log'
+        svp.write('#SBATCH --output={0}/svintegrate/sv_svintegrate_{1}.log'
                   '\n'.format(logdir,sam))
         svp.write('#SBATCH --qos=supporters\n')
         svp.write('#SBATCH --account=big\n')
-        svp.write('#SBATCH --dependency=afterok:{0}\n'.format(job))
+        if job:
+            svp.write('#SBATCH --dependency=afterok:{0}\n'.format(job))
         svp.write('echo "SLURM_JOBID="$SLURM_JOBID\n')
         svp.write('echo "SLURM_JOB_NODELIST"=$SLURM_JOB_NODELIST\n')
         svp.write('echo "SLURM_NNODES"=$SLURM_NNODES\n')
@@ -171,41 +184,47 @@ def runSlurmScript(script):
     return(job)    
 
 def createlogDirs(bams,workdir):
-    logdir = workdir + '/' + bams.split('.')[0] + 'logs'
+    logdir = workdir + '/' + bams.split('/')[-1].split('.')[0] + 'logs'
     sublogdirs = ['bpintegrate','bpsearch','nullmodel','svintegrate','svpredict']
     for sublogdir in sublogdirs:
         try:
             os.makedirs(logdir + '/' + sublogdir)
         except OSError:
-            if not os.path.isdir(path):
+            if not os.path.isdir(logdir + '/' + sublogdir):
                 raise
     return(logdir)
 
-def executePipeline(bams,workdir,scriptdir,logdir):
-    numjobs=0
-    #chroms = [n for n in range(18,21)]
+# Run svelter steps in sequence. Only run steps which are in step list, which allows
+# rerunning pipeline starting at specific step.
+def main(args):
+    numjobs = 0
+    #chroms = [21,22]
     chroms = [n for n in range(1,23)]
     chroms.append('X')
     chroms.append('Y')
     chroms.append('MT')
+
+    steps = ['nullmodel','bpsearch','bpintegrate','svpredict','svintegrate']
+    steps = steps[steps.index(args.step):]
+    logdir = createlogDirs(args.bams,args.work)
     
     # get username for use in upcoming squeue subprocess calls
     runid = subprocess.Popen(['id', '-u', '-n'],stdout=subprocess.PIPE)
     runidout, err = runid.communicate()
     uname = runidout.strip()
-    
+
     # allow for a single bam to be run without txt file
     bamlist = []
-    if not bams.endswith('.bam'):
-        with open(bams,'r') as fin:
+    if not args.bams.endswith('.bam'):
+        with open(args.bams,'r') as fin:
             for line in fin:
                 if not line.startswith('#') and line.strip() != '':
                     bamlist.append(line.strip())
     else:
-        bamlist.append(bams)
+        bamlist.append(args.bams)
 
-
-    for bam in bamlist:
+    print('Starting from step: {0}'.format(args.step))
+    for i,bam in enumerate(bamlist, start=1):
         sam = bam.split('/')[-1].split('_')[0]
         
         # 29 jobs submitted per bam, keep submitted jobs under 990
@@ -216,35 +235,48 @@ def executePipeline(bams,workdir,scriptdir,logdir):
             squeueout, err = squeue.communicate()
             numjobs = len(squeueout.split('\n')) - 1
 
-        print('Submitting jobs for sample {0}'.format(sam))
+        print('{0}/{1}: Submitting jobs for sample {2}'.format(i,len(bamlist),sam))
 
-        createNullModel(bam,sam,workdir,logdir,scriptdir)
-        script = '{0}/sv_nullmodel_{1}.sh'.format(scriptdir,sam)
-        job = runSlurmScript(script)
-        time.sleep(1)
-        
-        createBPSearch(bam,sam,workdir,logdir,scriptdir,chroms,job)
-        jobs = []
-        for chrom in chroms:
-            script = '{0}/sv_bpsearch_{1}chr{2}.sh'.format(scriptdir,sam,chrom)
+        if 'nullmodel' in steps:
+            createNullModel(bam,sam,args.work,logdir,args.scripts)
+            script = '{0}/sv_nullmodel_{1}.sh'.format(args.scripts,sam)
             job = runSlurmScript(script)
-            jobs.append(job)
             time.sleep(1)
         
-        createBPIntegrate(bam,sam,workdir,logdir,scriptdir,jobs)
-        script = '{0}/sv_bpintegrate_{1}.sh'.format(scriptdir,sam)
-        job = runSlurmScript(script)
-        time.sleep(1)
+        if 'bpsearch' in steps:
+            if steps.index('bpsearch') == 0:
+                job = False
+            createBPSearch(bam,sam,args.work,logdir,args.scripts,chroms,job)
+            jobs = []
+            for chrom in chroms:
+                script = '{0}/sv_bpsearch_{1}chr{2}.sh'.format(args.scripts,sam,chrom)
+                job = runSlurmScript(script)
+                jobs.append(job)
+                time.sleep(1)
         
-        createSVPredict(bam,sam,workdir,logdir,scriptdir,job)
-        script = '{0}/sv_svpredict_{1}.sh'.format(scriptdir,sam)
-        job = runSlurmScript(script)
-        time.sleep(1)
+        if 'bpintegrate' in steps:
+            if steps.index('bpintegrate') == 0:
+                jobs = False
+            createBPIntegrate(bam,sam,args.work,logdir,args.scripts,jobs)
+            script = '{0}/sv_bpintegrate_{1}.sh'.format(args.scripts,sam)
+            job = runSlurmScript(script)
+            time.sleep(1)
         
-        createSVIntegrate(bam,sam,workdir,logdir,scriptdir,job)
-        script = '{0}/sv_svintegrate_{1}.sh'.format(scriptdir,sam)
-        job = runSlurmScript(script)
-        time.sleep(1)
+        if 'svpredict' in steps:
+            if steps.index('svpredict') == 0:
+                job = False
+            createSVPredict(bam,sam,args.work,logdir,args.scripts,job)
+            script = '{0}/sv_svpredict_{1}.sh'.format(args.scripts,sam)
+            job = runSlurmScript(script)
+            time.sleep(1)
+        
+        if 'svintegrate' in steps:
+            if steps.index('svintegrate') == 0:
+                job = False
+            createSVIntegrate(bam,sam,args.work,logdir,args.scripts,job)
+            script = '{0}/sv_svintegrate_{1}.sh'.format(args.scripts,sam)
+            job = runSlurmScript(script)
+            time.sleep(1)
         
         squeue = subprocess.Popen(['squeue', '-h', '-u', '{0}'.format(uname)],
                               stdout=subprocess.PIPE)
@@ -252,10 +284,32 @@ def executePipeline(bams,workdir,scriptdir,logdir):
         numjobs = len(squeueout.split('\n')) - 1
 
 if __name__ == '__main__':
-    if any(['help' in arg for arg in sys.argv[1:]]) or len(sys.argv) != 4:
-        sys.exit('Use: python svelter_pipeline.py [file of bam locations, 1 per line] [/path/for/scripts] [svelter working directory]')
-    bams = sys.argv[1].strip()
-    scriptdir = sys.argv[2].strip()
-    workdir = sys.argv[3].strip()
-    logdir = createlogDirs(bams,workdir)
-    executePipeline(bams,workdir,scriptdir,logdir)
+    parser = argparse.ArgumentParser(description='Run svelter on linux using SLURM')
+    parser.add_argument('-b', '--bams', 
+                        action='store',
+                        required=True,
+                        help='Either single .bam or file containing bam locations, '
+                             '1 bam per line')
+
+    parser.add_argument('--scripts',
+        	       	    action='store',
+        	       	    required=True,
+        	       	    help='Desired path for slurm scrips')
+
+    parser.add_argument('-w', '--work',
+        	       	    action='store',
+        	       	    required=True,
+        	       	    help='Svelter working directory, also where final vcfs reside')
+
+    parser.add_argument('-s', '--step',
+        	       	    default='nullmodel',
+                        choices=['nullmodel', 
+                                 'bpsearch', 
+                                 'bpintegrate', 
+                                 'svpredict', 
+                                 'svintegrate'],
+                        action='store',
+       	        	    help='Desired starting step, default: nullmodel.')
+
+    args = parser.parse_args()
+    main(args)
